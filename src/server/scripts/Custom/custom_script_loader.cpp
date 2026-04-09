@@ -17,10 +17,26 @@
 
 // This is where scripts' loading functions should be declared:
 // void MyExampleScript()
+void AddSC_spell_custom_mana_scaling_damage();
+void AddSC_spell_custom_mana_scaling_heal();
+void AddSC_spell_custom_chemist_spike();
+void AddSC_spell_custom_cleric_heal();
+void AddSC_spell_custom_pirate_impale();
+void AddSC_spell_custom_priest_photon();
+void AddSC_spell_custom_trickster_coup();
+void AddSC_spell_custom_warlock_void();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
     // MyExampleScript()
+	AddSC_spell_custom_mana_scaling_damage();
+	AddSC_spell_custom_mana_scaling_heal();
+	AddSC_spell_custom_chemist_spike();
+	AddSC_spell_custom_cleric_heal();
+	AddSC_spell_custom_pirate_impale();
+	AddSC_spell_custom_priest_photon();
+	AddSC_spell_custom_trickster_coup();
+	AddSC_spell_custom_warlock_void();
 }

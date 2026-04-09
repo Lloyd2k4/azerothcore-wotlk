@@ -71,13 +71,13 @@ enum Emotes
 
 enum HitCounter
 {
-    HITCOUNTER_SLOW             = 100,
-    HITCOUNTER_SLOW_MORE        = 150,
-    HITCOUNTER_FREEZE           = 200,
+    HITCOUNTER_SLOW             = 60,
+    HITCOUNTER_SLOW_MORE        = 90,
+    HITCOUNTER_FREEZE           = 120,
 
-    HITCOUNTER_CRACK            = 50,
-    HITCOUNTER_SHATTER          = 100,
-    HITCOUNTER_EXPLODE          = 150,
+    HITCOUNTER_CRACK            = 30,
+    HITCOUNTER_SHATTER          = 60,
+    HITCOUNTER_EXPLODE          = 90,
 };
 
 enum MovePoints

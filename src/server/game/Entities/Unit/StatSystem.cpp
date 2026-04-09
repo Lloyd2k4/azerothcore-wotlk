@@ -758,13 +758,13 @@ void Player::UpdateParryPercentage()
         47.003525f,     // Paladin
         145.560408f,    // Hunter
         145.560408f,    // Rogue
-        0.0f,           // Priest
+        74.007050f,     // Priest
         47.003525f,     // DK
         145.560408f,    // Shaman
-        0.0f,           // Mage
-        0.0f,           // Warlock
+        74.007050f,    // Mage
+        74.007050f,    // Warlock
         0.0f,           // ??
-        0.0f            // Druid
+        74.007050f      // Druid
     };
 
     // No parry

@@ -205,7 +205,7 @@ uint32 Quest::XPValue(uint8 playerLevel) const
         return 0;
     }
 
-    int32 diffFactor = 2 * (quest_level - playerLevel) + 20;
+    int32 diffFactor = 2 * (quest_level - playerLevel) + 35;
     if (diffFactor < 1)
     {
         diffFactor = 1;
