@@ -25,6 +25,8 @@ void AddSC_spell_custom_pirate_impale();
 void AddSC_spell_custom_priest_photon();
 void AddSC_spell_custom_trickster_coup();
 void AddSC_spell_custom_warlock_void();
+void AddSC_spell_custom_monk_rising_kick_knockup();
+void AddSC_spell_custom_templar_bonus_holy();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -39,4 +41,6 @@ void AddCustomScripts()
 	AddSC_spell_custom_priest_photon();
 	AddSC_spell_custom_trickster_coup();
 	AddSC_spell_custom_warlock_void();
+	AddSC_spell_custom_monk_rising_kick_knockup();
+	AddSC_spell_custom_templar_bonus_holy();
 }

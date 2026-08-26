@@ -5207,7 +5207,7 @@ void AuraEffect::HandleAuraModRangedAttackPowerOfStatPercent(AuraApplication con
     Unit* target = aurApp->GetTarget();
 
     // Recalculate bonus
-    if (target->IsPlayer() /*&& !(target->getClassMask() & CLASSMASK_WAND_USERS)*/)
+    if (target->IsPlayer() /* && !(target->getClassMask() & CLASSMASK_WAND_USERS)*/)
         target->ToPlayer()->UpdateAttackPowerAndDamage(true);
 }
 

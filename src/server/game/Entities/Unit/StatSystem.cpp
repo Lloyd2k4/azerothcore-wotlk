@@ -761,8 +761,8 @@ void Player::UpdateParryPercentage()
         74.007050f,     // Priest
         47.003525f,     // DK
         145.560408f,    // Shaman
-        74.007050f,    // Mage
-        74.007050f,    // Warlock
+        74.007050f,     // Mage
+        74.007050f,     // Warlock
         0.0f,           // ??
         74.007050f      // Druid
     };
