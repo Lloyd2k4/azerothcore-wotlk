@@ -5109,7 +5109,7 @@ void Player::GetDodgeFromAgility(float& diminishing, float& nondiminishing)
     {
         0.036640f, // Warrior
         0.034943f, // Paladi
-        -0.040873f, // Hunter
+        0.020873f, // Hunter
         0.020957f, // Rogue
         0.034178f, // Priest
         0.036640f, // DK
@@ -13321,9 +13321,9 @@ void Player::InitGlyphsForLevel()
         value |= 0x08;
     if (level >= 50)
         value |= 0x04;
-    if (level >= 70)
+    if (level >= 60)
         value |= 0x10;
-    if (level >= 80)
+    if (level >= 60)
         value |= 0x20;
 
     SetUInt32Value(PLAYER_GLYPHS_ENABLED, value);

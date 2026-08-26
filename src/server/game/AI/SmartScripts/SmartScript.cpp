@@ -66,6 +66,19 @@ SmartScript::~SmartScript()
 {
 }
 
+static bool IsUnitCrowdControlled(Unit* unit)
+{
+    if (!unit)
+        return false;
+
+    static constexpr uint32 ccStates =
+        UNIT_STATE_STUNNED |
+        UNIT_STATE_CONFUSED |
+        UNIT_STATE_FLEEING;
+
+    return unit->HasUnitState(ccStates);
+}
+
 bool SmartScript::IsSmart(Creature* c, bool silent) const
 {
     if (!c)
@@ -663,6 +676,18 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                 }
                 else if (me)
                 {
+					bool ignoreCc = false; // e.g. read from e.action.cast.castFlags or a spare param
+
+					Unit* targetUnit = target->ToUnit();
+
+					if (!ignoreCc)
+					{
+						// If either caster or target is crowd‑controlled, skip this cast
+						if (IsUnitCrowdControlled(me) || IsUnitCrowdControlled(targetUnit))
+						{
+							continue;
+						}
+					}
                     // If target has the aura, skip
                     if ((e.action.cast.castFlags & SMARTCAST_AURA_NOT_PRESENT) && target->ToUnit()->HasAura(e.action.cast.spell))
                         continue;
