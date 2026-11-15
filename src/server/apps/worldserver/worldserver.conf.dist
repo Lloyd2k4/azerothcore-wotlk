@@ -2232,6 +2232,16 @@ SpellQueue.Window = 400
 SpellLevelPenalty.MinFactor = 0.8
 
 #
+#    Resistance.NegativeEffectiveness
+#        Description: How effective resistance below zero is when a spell reduces
+#                     a target's resistance past zero. For example, 0.25 means the
+#                     below-zero portion is 75% less effective.
+#        Default:     0.25
+#                     0   - (Below-zero resistance has no effect)
+
+Resistance.NegativeEffectiveness = 0.25
+
+#
 ###################################################################################################
 
 ###################################################################################################

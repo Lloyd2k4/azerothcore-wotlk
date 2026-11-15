@@ -24,6 +24,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellMgr.h"
 #include "Unit.h"
+#include "World.h"
 
 inline bool _ModifyUInt32(bool apply, uint32& baseValue, int32& amount)
 {
@@ -259,6 +260,18 @@ void Player::UpdateResistances(uint32 school)
         }
 
         value *= GetPctModifierValue(unitMod, TOTAL_PCT);
+
+        // Below zero resistance is only partially effective; the innate
+        // negative base value is kept at full strength
+        if (value < 0.0f)
+        {
+            float innateNegative =
+                std::min(GetFlatModifierValue(unitMod, BASE_VALUE), 0.0f);
+            innateNegative = std::max(innateNegative, value);
+            float effectiveness = sWorld->getFloatConfig(
+                CONFIG_NEGATIVE_RESISTANCE_EFFECTIVENESS);
+            value = innateNegative + (value - innateNegative) * effectiveness;
+        }
 
         SetResistance(SpellSchools(school), int32(value));
     }
@@ -1054,7 +1067,21 @@ void Creature::UpdateResistances(uint32 school)
 {
     if (school > SPELL_SCHOOL_NORMAL)
     {
-        float value = GetTotalAuraModValue(UnitMods(UNIT_MOD_RESISTANCE_START + school));
+        UnitMods unitMod = UnitMods(UNIT_MOD_RESISTANCE_START + school);
+        float value = GetTotalAuraModValue(unitMod);
+
+        // Below zero resistance is only partially effective; the innate
+        // negative base value is kept at full strength
+        if (value < 0.0f)
+        {
+            float innateNegative =
+                std::min(GetFlatModifierValue(unitMod, BASE_VALUE), 0.0f);
+            innateNegative = std::max(innateNegative, value);
+            float effectiveness = sWorld->getFloatConfig(
+                CONFIG_NEGATIVE_RESISTANCE_EFFECTIVENESS);
+            value = innateNegative + (value - innateNegative) * effectiveness;
+        }
+
         SetResistance(SpellSchools(school), int32(value));
     }
     else

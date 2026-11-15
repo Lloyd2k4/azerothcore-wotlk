@@ -1139,7 +1139,7 @@ public:
     float GetAPMultiplier(WeaponAttackType attType, bool normalized);
 
     // Secondary attributes
-    [[nodiscard]] uint32 GetArmor() const { return GetResistance(SPELL_SCHOOL_NORMAL); }
+    [[nodiscard]] uint32 GetArmor() const { return uint32(std::max(GetResistance(SPELL_SCHOOL_NORMAL), 0)); }
     void SetArmor(int32 val) { SetResistance(SPELL_SCHOOL_NORMAL, val); }
 
     [[nodiscard]] float GetUnitDodgeChance() const;
@@ -1178,11 +1178,17 @@ public:
 
     // Resistances methods
     int32 GetMechanicResistChance(SpellInfo const* spell);
-    [[nodiscard]] uint32 GetResistance(SpellSchoolMask mask) const;
-    [[nodiscard]] uint32 GetResistance(SpellSchools school) const { return GetUInt32Value(static_cast<uint16>(UNIT_FIELD_RESISTANCES) + school); }
+    [[nodiscard]] int32 GetResistance(SpellSchoolMask mask) const;
+    [[nodiscard]] int32 GetResistance(SpellSchools school) const { return GetInt32Value(static_cast<uint16>(UNIT_FIELD_RESISTANCES) + school); }
     static float GetEffectiveResistChance(Unit const* owner, SpellSchoolMask schoolMask, Unit const* victim);
 
-    void SetResistance(SpellSchools school, int32 val) { SetStatInt32Value(static_cast<uint16>(UNIT_FIELD_RESISTANCES) + school, val); }
+    void SetResistance(SpellSchools school, int32 val)
+    {
+        // Armor is stored in the normal school slot and must never go negative
+        if (school == SPELL_SCHOOL_NORMAL)
+            val = std::max(val, 0);
+        SetInt32Value(static_cast<uint16>(UNIT_FIELD_RESISTANCES) + school, val);
+    }
     void UpdateResistanceBuffModsMod(SpellSchools school);
 
     ////////////    Need triage   ////////////////

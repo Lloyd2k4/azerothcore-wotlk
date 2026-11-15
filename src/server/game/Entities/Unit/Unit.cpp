@@ -2149,6 +2149,7 @@ uint32 Unit::CalcArmorReducedDamage(Unit const* attacker, Unit const* victim, co
 float Unit::GetEffectiveResistChance(Unit const* owner, SpellSchoolMask schoolMask, Unit const* victim)
 {
     float victimResistance = static_cast<float>(victim->GetResistance(schoolMask));
+    float resistanceModifier = 0.0f;
     if (owner)
     {
         // Xinef: pets inherit 100% of masters penetration
@@ -2156,14 +2157,32 @@ float Unit::GetEffectiveResistChance(Unit const* owner, SpellSchoolMask schoolMa
         Player const* player = owner->GetSpellModOwner();
         if (player && owner->GetEntry() != WORLD_TRIGGER)
         {
-            victimResistance += static_cast<float>(player->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
-            victimResistance -= static_cast<float>(player->GetSpellPenetrationItemMod());
+            resistanceModifier += static_cast<float>(player->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
+            resistanceModifier -= static_cast<float>(player->GetSpellPenetrationItemMod());
         }
         else
-            victimResistance += static_cast<float>(owner->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
+            resistanceModifier += static_cast<float>(owner->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
     }
 
-    victimResistance = std::max(victimResistance, 0.0f);
+    // Below zero resistance is only partially effective here
+    if (resistanceModifier != 0.0f)
+    {
+        float modifiedResistance = victimResistance + resistanceModifier;
+        float modifierEffectiveness =
+            sWorld->getFloatConfig(CONFIG_NEGATIVE_RESISTANCE_EFFECTIVENESS);
+
+        if (victimResistance >= 0.0f)
+        {
+            victimResistance = (modifiedResistance < 0.0f)
+                ? modifiedResistance * modifierEffectiveness
+                : modifiedResistance;
+        }
+        else if (modifiedResistance < victimResistance)
+            victimResistance += resistanceModifier * modifierEffectiveness;
+        else
+            victimResistance = modifiedResistance;
+    }
+
     if (owner)
         victimResistance += std::max(static_cast<float>(victim->GetLevel() - owner->GetLevel()) * 5.0f, 0.0f);
 
@@ -2177,7 +2196,13 @@ float Unit::GetEffectiveResistChance(Unit const* owner, SpellSchoolMask schoolMa
     else
         resistanceConstant = 50.0f;
 
-    return std::min(victimResistance / (victimResistance + resistanceConstant), 0.75f);
+    if (victimResistance >= 0.0f)
+        return std::min(victimResistance / (victimResistance + resistanceConstant), 0.75f);
+
+    // Negative resistance causes vulnerability damage, bounded at 100%
+    float vulnerabilityChance =
+        -victimResistance / (resistanceConstant - victimResistance);
+    return -std::min(vulnerabilityChance, 1.0f);
 }
 
 void Unit::CalcAbsorbResist(DamageInfo& dmgInfo, bool Splited)
@@ -2198,60 +2223,70 @@ void Unit::CalcAbsorbResist(DamageInfo& dmgInfo, bool Splited)
     {
         float averageResist = Unit::GetEffectiveResistChance(attacker, schoolMask, victim);
 
-        float discreteResistProbability[11];
-        for (uint32 i = 0; i < 11; ++i)
+        if (averageResist < 0.0f)
         {
-            discreteResistProbability[i] = 0.5f - 2.5f * std::fabs(0.1f * i - averageResist);
-            if (discreteResistProbability[i] < 0.0f)
-                discreteResistProbability[i] = 0.0f;
+            // Negative resistance causes vulnerability damage
+            int32 bonusDamage = int32(damage * -averageResist);
+            if (bonusDamage > 0)
+                dmgInfo.ModifyDamage(bonusDamage);
         }
-
-        if (averageResist <= 0.1f)
+        else
         {
-            discreteResistProbability[0] = 1.0f - 7.5f * averageResist;
-            discreteResistProbability[1] = 5.0f * averageResist;
-            discreteResistProbability[2] = 2.5f * averageResist;
-        }
-
-        float r = float(rand_norm());
-        uint32 i = 0;
-        float probabilitySum = discreteResistProbability[0];
-
-        while (r >= probabilitySum && i < 10)
-            probabilitySum += discreteResistProbability[++i];
-
-        float damageResisted = float(damage * i / 10);
-
-        if (damageResisted) // if equal to 0, checking these is pointless
-        {
-            if (attacker)
+            float discreteResistProbability[11];
+            for (uint32 i = 0; i < 11; ++i)
             {
-                float mult = attacker->GetTotalAuraMultiplier(SPELL_AURA_MOD_ABILITY_IGNORE_TARGET_RESIST, [schoolMask, spellInfo](AuraEffect const* aurEff)
+                discreteResistProbability[i] = 0.5f - 2.5f * std::fabs(0.1f * i - averageResist);
+                if (discreteResistProbability[i] < 0.0f)
+                    discreteResistProbability[i] = 0.0f;
+            }
+
+            if (averageResist <= 0.1f)
+            {
+                discreteResistProbability[0] = 1.0f - 7.5f * averageResist;
+                discreteResistProbability[1] = 5.0f * averageResist;
+                discreteResistProbability[2] = 2.5f * averageResist;
+            }
+
+            float r = float(rand_norm());
+            uint32 i = 0;
+            float probabilitySum = discreteResistProbability[0];
+
+            while (r >= probabilitySum && i < 10)
+                probabilitySum += discreteResistProbability[++i];
+
+            float damageResisted = float(damage * i / 10);
+
+            if (damageResisted) // if equal to 0, checking these is pointless
+            {
+                if (attacker)
                 {
-                    if (!(aurEff->GetMiscValue() & schoolMask))
-                        return false;
+                    float mult = attacker->GetTotalAuraMultiplier(SPELL_AURA_MOD_ABILITY_IGNORE_TARGET_RESIST, [schoolMask, spellInfo](AuraEffect const* aurEff)
+                    {
+                        if (!(aurEff->GetMiscValue() & schoolMask))
+                            return false;
 
-                    if (!aurEff->IsAffectedOnSpell(spellInfo))
-                        return false;
+                        if (!aurEff->IsAffectedOnSpell(spellInfo))
+                            return false;
 
-                    return true;
-                });
-                damageResisted -= damageResisted * (mult - 1.0f);
-                mult = attacker->GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_IGNORE_TARGET_RESIST, schoolMask);
-                damageResisted -= damageResisted * (mult - 1.0f);
+                        return true;
+                    });
+                    damageResisted -= damageResisted * (mult - 1.0f);
+                    mult = attacker->GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_IGNORE_TARGET_RESIST, schoolMask);
+                    damageResisted -= damageResisted * (mult - 1.0f);
+                }
+
+                // pussywizard:
+                if (spellInfo && spellInfo->HasAttribute(SPELL_ATTR0_CU_SCHOOLMASK_NORMAL_WITH_MAGIC))
+                {
+                    uint32 damageAfterArmor = Unit::CalcArmorReducedDamage(attacker, victim, damage, spellInfo, 0, BASE_ATTACK);
+                    uint32 armorReduction = damage - damageAfterArmor;
+                    if (armorReduction < damageResisted) // pick the lower one, the weakest resistance counts
+                        damageResisted = armorReduction;
+                }
             }
 
-            // pussywizard:
-            if (spellInfo && spellInfo->HasAttribute(SPELL_ATTR0_CU_SCHOOLMASK_NORMAL_WITH_MAGIC))
-            {
-                uint32 damageAfterArmor = Unit::CalcArmorReducedDamage(attacker, victim, damage, spellInfo, 0, BASE_ATTACK);
-                uint32 armorReduction = damage - damageAfterArmor;
-                if (armorReduction < damageResisted) // pick the lower one, the weakest resistance counts
-                    damageResisted = armorReduction;
-            }
+            dmgInfo.ResistDamage(uint32(damageResisted));
         }
-
-        dmgInfo.ResistDamage(uint32(damageResisted));
     }
 
     // Ignore Absorption Auras
@@ -20324,15 +20359,21 @@ void Unit::SendClearTarget()
     SendMessageToSet(&data, false);
 }
 
-uint32 Unit::GetResistance(SpellSchoolMask mask) const
+int32 Unit::GetResistance(SpellSchoolMask mask) const
 {
-    int32 resist = -1;
+    int32 resist = 0;
+    bool found = false;
     for (int i = SPELL_SCHOOL_NORMAL; i < MAX_SPELL_SCHOOL; ++i)
-        if (mask & (1 << i) && (resist < 0 || resist > int32(GetResistance(SpellSchools(i)))))
-            resist = int32(GetResistance(SpellSchools(i)));
+    {
+        if (!(mask & (1 << i)))
+            continue;
 
-    // resist value will never be negative here
-    return uint32(resist);
+        int32 value = GetResistance(SpellSchools(i));
+        resist = found ? std::min(resist, value) : value;
+        found = true;
+    }
+
+    return resist;
 }
 
 void Unit::PetSpellFail(SpellInfo const* spellInfo, Unit* target, uint32 result)

@@ -671,6 +671,9 @@ void WorldConfig::BuildConfigCache()
     // SpellLevelPenalty
     SetConfigValue<float>(CONFIG_SPELL_LEVEL_PENALTY_MIN_FACTOR, "SpellLevelPenalty.MinFactor", 0.8f, ConfigValueCache::Reloadable::Yes, [](float const& value) { return value >= 0.0f && value <= 1.0f; }, ">= 0 && <= 1");
 
+    // Resistances
+    SetConfigValue<float>(CONFIG_NEGATIVE_RESISTANCE_EFFECTIVENESS, "Resistance.NegativeEffectiveness", 0.25f, ConfigValueCache::Reloadable::Yes, [](float const& value) { return value >= 0.0f && value <= 1.0f; }, ">= 0 && <= 1");
+
     // World State
     SetConfigValue<uint32>(CONFIG_SUNSREACH_COUNTER_MAX, "Sunsreach.CounterMax", 10000);
     SetConfigValue<uint32>(CONFIG_SCOURGEINVASION_COUNTER_FIRST, "ScourgeInvasion.CounterFirst", 50);
