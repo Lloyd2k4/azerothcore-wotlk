@@ -2736,6 +2736,10 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8>& targets, Unit* caster)
         else
         {
             float radius = GetSpellInfo()->Effects[effIndex].CalcRadius(caster);
+            // A zero radius area aura only affects its owner. Note that
+            // IsWithinDistInMap includes object sizes, so radius 0 would
+            // otherwise include stacked units.
+            bool const selfOnly = radius <= 0.0f;
 
             if (!GetUnitOwner()->HasUnitState(UNIT_STATE_ISOLATED))
             {
@@ -2745,6 +2749,8 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8>& targets, Unit* caster)
                     case SPELL_EFFECT_APPLY_AREA_AURA_RAID:
                         {
                             targetList.push_back(GetUnitOwner());
+                            if (selfOnly)
+                                break;
                             Acore::AnyGroupedUnitInObjectRangeCheck u_check(GetUnitOwner(), GetUnitOwner(), radius, GetSpellInfo()->Effects[effIndex].Effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID);
                             Acore::UnitListSearcher<Acore::AnyGroupedUnitInObjectRangeCheck> searcher(GetUnitOwner(), targetList, u_check);
                             Cell::VisitObjects(GetUnitOwner(), searcher, radius);
@@ -2753,6 +2759,8 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8>& targets, Unit* caster)
                     case SPELL_EFFECT_APPLY_AREA_AURA_FRIEND:
                         {
                             targetList.push_back(GetUnitOwner());
+                            if (selfOnly)
+                                break;
                             Acore::AnyFriendlyUnitInObjectRangeCheck u_check(GetUnitOwner(), GetUnitOwner(), radius);
                             Acore::UnitListSearcher<Acore::AnyFriendlyUnitInObjectRangeCheck> searcher(GetUnitOwner(), targetList, u_check);
                             Cell::VisitObjects(GetUnitOwner(), searcher, radius);
@@ -2760,6 +2768,8 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8>& targets, Unit* caster)
                         }
                     case SPELL_EFFECT_APPLY_AREA_AURA_ENEMY:
                         {
+                            if (selfOnly)
+                                break;
                             Acore::AnyAoETargetUnitInObjectRangeCheck u_check(GetUnitOwner(), GetUnitOwner(), radius); // No GetCharmer in searcher
                             Acore::UnitListSearcher<Acore::AnyAoETargetUnitInObjectRangeCheck> searcher(GetUnitOwner(), targetList, u_check);
                             Cell::VisitObjects(GetUnitOwner(), searcher, radius);
@@ -2770,6 +2780,8 @@ void UnitAura::FillTargetMap(std::map<Unit*, uint8>& targets, Unit* caster)
                         [[fallthrough]]; /// @todo: Not sure whether the fallthrough was a mistake (forgetting a break) or intended. This should be double-checked.
                     case SPELL_EFFECT_APPLY_AREA_AURA_OWNER:
                         {
+                            if (selfOnly)
+                                break;
                             if (Unit* owner = GetUnitOwner()->GetCharmerOrOwner())
                                 if (GetUnitOwner()->IsWithinDistInMap(owner, radius))
                                     targetList.push_back(owner);

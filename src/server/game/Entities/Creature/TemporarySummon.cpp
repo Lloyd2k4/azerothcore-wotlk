@@ -23,6 +23,7 @@
 #include "Pet.h"
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "World.h"
 
 TempSummon::TempSummon(SummonPropertiesEntry const* properties, ObjectGuid owner) :
     Creature(), m_Properties(properties), m_type(TEMPSUMMON_MANUAL_DESPAWN),
@@ -72,6 +73,19 @@ void TempSummon::Update(uint32 diff)
         UnSummon();
         return;
     }
+
+    // A summon must not outlive its creature summoner (same rule as Totem)
+    if (sWorld->getBoolConfig(CONFIG_DESPAWN_SUMMONS_ON_OWNER_DEATH)
+        && m_summonerGUID.IsCreature())
+    {
+        Unit* summoner = GetSummonerUnit();
+        if (!summoner || !summoner->IsAlive())
+        {
+            UnSummon();
+            return;
+        }
+    }
+
     switch (m_type)
     {
         case TEMPSUMMON_MANUAL_DESPAWN:

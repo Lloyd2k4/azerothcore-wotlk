@@ -640,6 +640,7 @@ void WorldConfig::BuildConfigCache()
     SetConfigValue<uint32>(CONFIG_NPC_EVADE_IF_NOT_REACHABLE, "NpcEvadeIfTargetIsUnreachable", 5);
     SetConfigValue<uint32>(CONFIG_NPC_REGEN_TIME_IF_NOT_REACHABLE_IN_RAID, "NpcRegenHPTimeIfTargetIsUnreachable", 10);
     SetConfigValue<bool>(CONFIG_REGEN_HP_CANNOT_REACH_TARGET_IN_RAID, "NpcRegenHPIfTargetIsUnreachable", true);
+    SetConfigValue<bool>(CONFIG_DESPAWN_SUMMONS_ON_OWNER_DEATH, "DespawnSummonsOnOwnerDeath", true);
 
     //Debug
     SetConfigValue<bool>(CONFIG_DEBUG_BATTLEGROUND, "Debug.Battleground", false);
@@ -666,6 +667,9 @@ void WorldConfig::BuildConfigCache()
     // SpellQueue
     SetConfigValue<bool>(CONFIG_SPELL_QUEUE_ENABLED, "SpellQueue.Enabled", true);
     SetConfigValue<uint32>(CONFIG_SPELL_QUEUE_WINDOW, "SpellQueue.Window", 400);
+
+    // SpellLevelPenalty
+    SetConfigValue<float>(CONFIG_SPELL_LEVEL_PENALTY_MIN_FACTOR, "SpellLevelPenalty.MinFactor", 0.8f, ConfigValueCache::Reloadable::Yes, [](float const& value) { return value >= 0.0f && value <= 1.0f; }, ">= 0 && <= 1");
 
     // World State
     SetConfigValue<uint32>(CONFIG_SUNSREACH_COUNTER_MAX, "Sunsreach.CounterMax", 10000);

@@ -3089,7 +3089,15 @@ float Unit::CalculateLevelPenalty(SpellInfo const* spellProto) const
     if (LvlFactor > 1.0f)
         LvlFactor = 1.0f;
 
-    return AddPct(LvlFactor, -LvlPenalty);
+    float factor = AddPct(LvlFactor, -LvlPenalty);
+
+    // Optional floor so downranked spells keep part of the coefficient
+    float minFactor =
+        sWorld->getFloatConfig(CONFIG_SPELL_LEVEL_PENALTY_MIN_FACTOR);
+    if (minFactor)
+        factor = std::max(factor, minFactor);
+
+    return factor;
 }
 
 void Unit::SendMeleeAttackStart(Unit* victim, Player* sendTo)

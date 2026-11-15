@@ -2223,6 +2223,15 @@ SpellQueue.Enabled = 1
 SpellQueue.Window = 400
 
 #
+#    SpellLevelPenalty.MinFactor
+#        Description: Minimum multiplier applied to a spell's bonus damage/healing
+#                     coefficient when the caster outlevels the spell (downranking).
+#        Default:     0.8 - (At least 80% of the coefficient at any level)
+#                     0   - (Disabled, Blizzlike downranking)
+
+SpellLevelPenalty.MinFactor = 0.8
+
+#
 ###################################################################################################
 
 ###################################################################################################
@@ -2906,6 +2915,15 @@ CreatureFamilyFleeAssistanceRadius = 30
 #                     0  - (Disabled)
 
 CreatureLeashRadius = 30
+
+#
+#    DespawnSummonsOnOwnerDeath
+#        Description: Despawn temporary summons (including guardians) when their
+#                     creature summoner dies or is removed from the world.
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+
+DespawnSummonsOnOwnerDeath = 1
 
 #
 #    CreatureFamilyAssistanceRadius
