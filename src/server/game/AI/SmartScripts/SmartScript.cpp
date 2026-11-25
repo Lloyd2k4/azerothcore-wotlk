@@ -676,7 +676,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                 }
                 else if (me)
                 {
-					bool ignoreCc = false; // e.g. read from e.action.cast.castFlags or a spare param
+					bool ignoreCc = (e.action.cast.castFlags & SMARTCAST_TRIGGERED) != 0; // triggered casts skip CC
 
 					Unit* targetUnit = target->ToUnit();
 

@@ -10539,7 +10539,23 @@ bool Unit::Attack(Unit* victim, bool meleeAttack)
     else
     {
         if (victim->ToCreature()->IsEvadingAttacks())
+        {
+            // The server silently rejecting the attack leaves the client
+            // stuck in its auto-attack state (e.g. a mob evaded mid-attack),
+            // so explicitly stop it there.
+            if (Player* player = ToPlayer())
+            {
+                if (m_attacking == victim)
+                    AttackStop();
+                else
+                    SendMeleeAttackStop(victim);
+
+                if (!m_attacking)
+                    player->SendAttackSwingCancelAttack();
+            }
+
             return false;
+        }
     }
 
     // Unit with SPELL_AURA_SPIRIT_OF_REDEMPTION can not attack
